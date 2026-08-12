@@ -2,29 +2,28 @@ package com.Foodiee.utility;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.SQLException;
 
 public class DBConnection {
 
-	
-	private final static String url ="jdbc:mysql://localhost:3306/food_delivery";
-	private final static String username = "root";
-	private final static String password ="root";
-	
-	static Connection connection;
-	
-	public static Connection getConnection() {
-		
-		try {
-			Class.forName("com.mysql.cj.jdbc.Driver");
-			connection = DriverManager.getConnection(url, username, password);
-			
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		} catch(SQLException e) {
-			e.printStackTrace();
-		}
-		
-		return connection;
-	}
+    public static Connection getConnection() {
+
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+
+            String host = System.getenv("MYSQLHOST");
+            String port = System.getenv("MYSQLPORT");
+            String database = System.getenv("MYSQLDATABASE");
+            String user = System.getenv("MYSQLUSER");
+            String pass = System.getenv("MYSQLPASSWORD");
+
+            String url = "jdbc:mysql://" + host + ":" + port + "/" + database
+                    + "?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
+
+            return DriverManager.getConnection(url, user, pass);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 }
