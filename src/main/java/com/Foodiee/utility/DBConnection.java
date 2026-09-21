@@ -14,13 +14,17 @@ public class DBConnection {
 
             Class.forName("com.mysql.cj.jdbc.Driver");
 
+            // Get database details from environment variables
             String host = System.getenv("MYSQLHOST");
             String port = System.getenv("MYSQLPORT");
             String database = System.getenv("MYSQLDATABASE");
             String username = System.getenv("MYSQLUSER");
             String password = System.getenv("MYSQLPASSWORD");
 
-            // Local Eclipse fallback
+            String url;
+
+            // If environment variables are not available,
+            // use local MySQL database
             if (host == null || host.isEmpty()) {
 
                 host = "localhost";
@@ -28,21 +32,25 @@ public class DBConnection {
                 database = "foodiee";
                 username = "root";
 
-                // Put your LOCAL MySQL password here
+                // Replace this with your LOCAL MySQL password
                 password = "YOUR_LOCAL_MYSQL_PASSWORD";
+
+                url = "jdbc:mysql://" + host + ":" + port + "/" + database
+                        + "?useSSL=false"
+                        + "&allowPublicKeyRetrieval=true"
+                        + "&serverTimezone=UTC";
 
                 System.out.println("Using LOCAL MySQL database");
 
             } else {
 
-                System.out.println("Using RAILWAY MySQL database");
-            }
+                // Aiven / Render cloud database
+                url = "jdbc:mysql://" + host + ":" + port + "/" + database
+                        + "?sslMode=REQUIRED"
+                        + "&serverTimezone=UTC";
 
-            String url =
-                    "jdbc:mysql://" + host + ":" + port + "/" + database
-                    + "?useSSL=false"
-                    + "&allowPublicKeyRetrieval=true"
-                    + "&serverTimezone=UTC";
+                System.out.println("Using CLOUD MySQL database");
+            }
 
             connection = DriverManager.getConnection(
                     url,
