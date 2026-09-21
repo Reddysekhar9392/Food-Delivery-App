@@ -13,28 +13,42 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 @WebServlet("/LoginServlet")
-public class LoginServlet  extends HttpServlet{
-	
-	@Override
-	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		
-		String email = req.getParameter("email");
-		String password = req.getParameter("password");
-		
-		UserDAOImpl dao = new UserDAOImpl();
-		User user = dao.getUserByEmail(email);
-		
-		if(user!= null && user.getPassword().equals(password)) {
-			HttpSession session = req.getSession();
-			session.setAttribute("user", user);
-			resp.sendRedirect("RestaurantServlet");
-		} else {
-			
-			req.setAttribute("error","Invalid Email or Password");
+public class LoginServlet extends HttpServlet {
 
-            req.getRequestDispatcher("signin.jsp")
-                    .forward(req,resp);
-		}
-	}
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
 
+        String email = req.getParameter("email");
+        String password = req.getParameter("password");
+
+        System.out.println("Login request received for: " + email);
+
+        UserDAOImpl dao = new UserDAOImpl();
+        User user = dao.getUserByEmail(email);
+
+        if (user != null && user.getPassword().equals(password)) {
+
+            System.out.println("Login successful");
+
+            HttpSession session = req.getSession();
+            session.setAttribute("user", user);
+
+            resp.sendRedirect(
+                req.getContextPath() + "/RestaurantServlet"
+            );
+
+        } else {
+
+            System.out.println("Login failed");
+
+            req.setAttribute(
+                "error",
+                "Invalid Email or Password"
+            );
+
+            req.getRequestDispatcher("/signin.jsp")
+               .forward(req, resp);
+        }
+    }
 }

@@ -92,39 +92,50 @@ public class UserDAOImpl implements UserDAO{
 
 	    User user = null;
 
-	    try {
+	    try (Connection con = DBConnection.getConnection()) {
 
-	        Connection con = DBConnection.getConnection();
+	        if (con == null) {
+	            System.out.println("ERROR: Database connection is NULL");
+	            return null;
+	        }
+
+	        System.out.println("Searching user with email: " + email);
 
 	        String sql = "SELECT * FROM user WHERE email = ?";
 
-	        PreparedStatement ps = con.prepareStatement(sql);
-	        ps.setString(1, email);
+	        try (PreparedStatement ps = con.prepareStatement(sql)) {
 
-	        ResultSet rs = ps.executeQuery();
+	            ps.setString(1, email);
 
-	        if (rs.next()) {
+	            try (ResultSet rs = ps.executeQuery()) {
 
-	            user = new User();
+	                if (rs.next()) {
 
-	            user.setUser_id(rs.getInt("user_id"));
-	            user.setFull_name(rs.getString("full_name"));
-	            user.setEmail(rs.getString("email"));
-	            user.setPassword(rs.getString("password"));
-	            user.setPhone(rs.getString("phone"));
-	            user.setAddress(rs.getString("address"));
-	            user.setCity(rs.getString("city"));
-	            user.setPincode(rs.getString("pincode"));
-	            user.setRole(rs.getString("role"));
-	            user.setCreated_at(rs.getTimestamp("created_at"));
-	            user.setLast_login(rs.getTimestamp("last_login"));
+	                    System.out.println("User found in database");
+
+	                    user = new User();
+
+	                    user.setUser_id(rs.getInt("user_id"));
+	                    user.setFull_name(rs.getString("full_name"));
+	                    user.setEmail(rs.getString("email"));
+	                    user.setPassword(rs.getString("password"));
+	                    user.setPhone(rs.getString("phone"));
+	                    user.setAddress(rs.getString("address"));
+	                    user.setCity(rs.getString("city"));
+	                    user.setPincode(rs.getString("pincode"));
+	                    user.setRole(rs.getString("role"));
+	                    user.setCreated_at(rs.getTimestamp("created_at"));
+	                    user.setLast_login(rs.getTimestamp("last_login"));
+
+	                } else {
+	                    System.out.println("User NOT found in database");
+	                }
+	            }
 	        }
 
-	        rs.close();
-	        ps.close();
-	        con.close();
-
 	    } catch (Exception e) {
+
+	        System.out.println("ERROR while getting user by email:");
 	        e.printStackTrace();
 	    }
 
