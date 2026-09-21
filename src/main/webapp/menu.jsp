@@ -4,7 +4,6 @@
 <%@ page import="java.util.List,com.Foodiee.model.Menu"%>
 <%@ page import="com.Foodiee.model.Restaurant"%>
 
-
 <%
 Restaurant restaurant = (Restaurant) request.getAttribute("restaurant");
 List<Menu> allMenusByRestaurant =

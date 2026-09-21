@@ -4,6 +4,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
+
 <title>SignUp Page</title>
 
 <style type="text/css">
