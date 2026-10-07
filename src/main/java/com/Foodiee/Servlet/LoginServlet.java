@@ -15,40 +15,41 @@ import jakarta.servlet.http.HttpSession;
 @WebServlet("/LoginServlet")
 public class LoginServlet extends HttpServlet {
 
+    private static final long serialVersionUID = 1L;
+
     @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp)
-            throws ServletException, IOException {
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 
         String email = req.getParameter("email");
         String password = req.getParameter("password");
 
-        System.out.println("Login request received for: " + email);
+        if (email != null) {
+            email = email.trim();
+        }
 
         UserDAOImpl dao = new UserDAOImpl();
+
         User user = dao.getUserByEmail(email);
 
-        if (user != null && user.getPassword().equals(password)) {
+        if (user != null &&
+            user.getPassword() != null &&
+            user.getPassword().equals(password)) {
+
+            HttpSession session = req.getSession(true);
+
+            // IMPORTANT: use "user" everywhere
+            session.setAttribute("user", user);
 
             System.out.println("Login successful");
 
-            HttpSession session = req.getSession();
-            session.setAttribute("user", user);
+            // LOGIN -> RESTAURANTS
+            resp.sendRedirect(req.getContextPath() + "/RestaurantServlet");
 
-            resp.sendRedirect(
-                req.getContextPath() + "/RestaurantServlet"
-            );
-
-        } else {
-
-            System.out.println("Login failed");
-
-            req.setAttribute(
-                "error",
-                "Invalid Email or Password"
-            );
-
-            req.getRequestDispatcher("/signin.jsp")
-               .forward(req, resp);
+            return;
         }
+
+        req.setAttribute("error", "Invalid Email or Password");
+
+        req.getRequestDispatcher("/signin.jsp" ).forward(req, resp);
     }
 }

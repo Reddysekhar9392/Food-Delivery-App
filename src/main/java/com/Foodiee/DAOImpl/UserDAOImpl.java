@@ -3,8 +3,6 @@ package com.Foodiee.DAOImpl;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,18 +11,25 @@ import com.Foodiee.DAO.UserDAO;
 import com.Foodiee.model.User;
 import com.Foodiee.utility.DBConnection;
 
-public class UserDAOImpl implements UserDAO{
+public class UserDAOImpl implements UserDAO {
 
-	String INSERT_QUERY = "INSERT INTO user(full_name,email,password,phone,address,city,pincode, role, created_at, last_login) Values(?,?,?,?,?,?,?,?,?,?)";
+	// =========================
+	// ADD USER
+	// =========================
+
+	private static final String INSERT_QUERY =
+			"INSERT INTO user " +
+					"(full_name, email, password, phone, address, city, pincode, role, created_at, last_login) " +
+					"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 	@Override
 	public void addUser(User user) {
 
-		Connection connection = DBConnection.getConnection();
-
-		try {
-
-			PreparedStatement pstmt = connection.prepareStatement(INSERT_QUERY);
+		try (
+				Connection connection = DBConnection.getConnection();
+				PreparedStatement pstmt =
+						connection.prepareStatement(INSERT_QUERY)
+				) {
 
 			pstmt.setString(1, user.getFull_name());
 			pstmt.setString(2, user.getEmail());
@@ -35,7 +40,8 @@ public class UserDAOImpl implements UserDAO{
 			pstmt.setString(7, user.getPincode());
 			pstmt.setString(8, user.getRole());
 
-			Timestamp now = new Timestamp(System.currentTimeMillis());
+			Timestamp now =
+					new Timestamp(System.currentTimeMillis());
 
 			pstmt.setTimestamp(9, now);
 			pstmt.setTimestamp(10, now);
@@ -49,186 +55,398 @@ public class UserDAOImpl implements UserDAO{
 			}
 
 		} catch (Exception e) {
+
+			System.out.println("ERROR while adding user:");
 			e.printStackTrace();
 		}
 	}
+
+
+	// =========================
+	// GET USER BY ID
+	// =========================
 
 	@Override
 	public User getUser(int userId) {
 
-		String GET_QUERY ="select * from user where user_id = ?";
-		Connection connection = DBConnection.getConnection();
+		String sql =
+				"SELECT * FROM user WHERE user_id = ?";
 
-		try {
-			PreparedStatement pstmt = connection.prepareStatement(GET_QUERY);
+		try (
+				Connection connection =
+				DBConnection.getConnection();
+
+				PreparedStatement pstmt =
+						connection.prepareStatement(sql)
+				) {
+
 			pstmt.setInt(1, userId);
-			ResultSet res = pstmt.executeQuery();
-			
-			while(res.next()) {
-				res.getInt("user_id");
-				res.getString("full_name");
-				res.getString("email");
-				res.getString("password");
-				res.getString("phone");
-				res.getString("address");
-				res.getString("city");
-				res.getString("pincode");
-				res.getString("role");
-				res.getTimestamp("Created_at");
-				res.getTimestamp("Last_login");			
+
+			try (ResultSet rs = pstmt.executeQuery()) {
+
+				if (rs.next()) {
+
+					return mapUser(rs);
+				}
 			}
-			
-			pstmt.close();
-	        connection.close();
-	        
+
 		} catch (Exception e) {
+
+			System.out.println(
+					"ERROR while getting user by ID:"
+					);
+
 			e.printStackTrace();
 		}
+
 		return null;
 	}
-	
-	
+
+
+	// =========================
+	// GET USER BY EMAIL
+	// Used by LoginServlet
+	// =========================
+
 	public User getUserByEmail(String email) {
 
-	    User user = null;
+		String sql =
+				"SELECT * FROM user WHERE email = ?";
 
-	    try (Connection con = DBConnection.getConnection()) {
+		try (
+				Connection connection =
+				DBConnection.getConnection()
+				) {
 
-	        if (con == null) {
-	            System.out.println("ERROR: Database connection is NULL");
-	            return null;
-	        }
+			if (connection == null) {
 
-	        System.out.println("Searching user with email: " + email);
+				System.out.println(
+						"ERROR: Database connection is NULL"
+						);
 
-	        String sql = "SELECT * FROM user WHERE email = ?";
+				return null;
+			}
 
-	        try (PreparedStatement ps = con.prepareStatement(sql)) {
+			System.out.println(
+					"Searching user with email: " + email
+					);
 
-	            ps.setString(1, email);
+			try (
+					PreparedStatement pstmt =
+					connection.prepareStatement(sql)
+					) {
 
-	            try (ResultSet rs = ps.executeQuery()) {
+				pstmt.setString(1, email);
 
-	                if (rs.next()) {
+				try (
+						ResultSet rs =
+						pstmt.executeQuery()
+						) {
 
-	                    System.out.println("User found in database");
+					if (rs.next()) {
 
-	                    user = new User();
+						System.out.println(
+								"User found in database"
+								);
 
-	                    user.setUser_id(rs.getInt("user_id"));
-	                    user.setFull_name(rs.getString("full_name"));
-	                    user.setEmail(rs.getString("email"));
-	                    user.setPassword(rs.getString("password"));
-	                    user.setPhone(rs.getString("phone"));
-	                    user.setAddress(rs.getString("address"));
-	                    user.setCity(rs.getString("city"));
-	                    user.setPincode(rs.getString("pincode"));
-	                    user.setRole(rs.getString("role"));
-	                    user.setCreated_at(rs.getTimestamp("created_at"));
-	                    user.setLast_login(rs.getTimestamp("last_login"));
+						return mapUser(rs);
 
-	                } else {
-	                    System.out.println("User NOT found in database");
-	                }
-	            }
-	        }
+					} else {
 
-	    } catch (Exception e) {
+						System.out.println(
+								"User NOT found in database"
+								);
+					}
+				}
+			}
 
-	        System.out.println("ERROR while getting user by email:");
-	        e.printStackTrace();
-	    }
+		} catch (Exception e) {
 
-	    return user;
+			System.out.println(
+					"ERROR while getting user by email:"
+					);
+
+			e.printStackTrace();
+		}
+
+		return null;
 	}
+
+
+	// =========================
+	// UPDATE USER
+	// =========================
 
 	@Override
 	public void updateUser(User user) {
-		String UPDATE_QUERY = "update user set  full_name =?, email=?, password =?, phone = ?, address =?, city =?, pincode =?,role =?, created_at =?, last_login =? where user_id =?"; 
 
-		Connection connection = DBConnection.getConnection();
-		
-		try {
-			
-			PreparedStatement pstmt = connection.prepareStatement(UPDATE_QUERY);
-			
-			pstmt.setString(1, user.getFull_name());
-			pstmt.setString(2, user.getEmail());
-			pstmt.setString(3, user.getPassword());
-			pstmt.setString(4, user.getPhone());
-			pstmt.setString(5, user.getAddress());
-			pstmt.setString(6, user.getCity());
-			pstmt.setString(7, user.getPincode());
-			pstmt.setString(8, user.getRole());
+		String sql =
+				"UPDATE user SET " +
+						"full_name = ?, " +
+						"email = ?, " +
+						"password = ?, " +
+						"phone = ?, " +
+						"address = ?, " +
+						"city = ?, " +
+						"pincode = ?, " +
+						"role = ?, " +
+						"created_at = ?, " +
+						"last_login = ? " +
+						"WHERE user_id = ?";
 
-			Timestamp now = new Timestamp(System.currentTimeMillis());
+		try (
+				Connection connection =
+				DBConnection.getConnection();
 
-			pstmt.setTimestamp(9, now);
-			pstmt.setTimestamp(10, now);
-			
-			int res = pstmt.executeUpdate();	
-			System.out.println(res);
-			
+				PreparedStatement pstmt =
+						connection.prepareStatement(sql)
+				) {
+
+			pstmt.setString(
+					1,
+					user.getFull_name()
+					);
+
+			pstmt.setString(
+					2,
+					user.getEmail()
+					);
+
+			pstmt.setString(
+					3,
+					user.getPassword()
+					);
+
+			pstmt.setString(
+					4,
+					user.getPhone()
+					);
+
+			pstmt.setString(
+					5,
+					user.getAddress()
+					);
+
+			pstmt.setString(
+					6,
+					user.getCity()
+					);
+
+			pstmt.setString(
+					7,
+					user.getPincode()
+					);
+
+			pstmt.setString(
+					8,
+					user.getRole()
+					);
+
+			Timestamp createdAt =
+					user.getCreated_at();
+
+			if (createdAt == null) {
+
+				createdAt =
+						new Timestamp(
+								System.currentTimeMillis()
+								);
+			}
+
+			pstmt.setTimestamp(
+					9,
+					createdAt
+					);
+
+			Timestamp now =
+					new Timestamp(
+							System.currentTimeMillis()
+							);
+
+			pstmt.setTimestamp(
+					10,
+					now
+					);
+
+			// IMPORTANT:
+			// 11th parameter for WHERE user_id = ?
+			pstmt.setInt(
+					11,
+					user.getUser_id()
+					);
+
+			int result =
+					pstmt.executeUpdate();
+
+			if (result > 0) {
+
+				System.out.println(
+						"User updated successfully."
+						);
+
+			} else {
+
+				System.out.println(
+						"User not found. Update failed."
+						);
+			}
+
 		} catch (Exception e) {
+
+			System.out.println(
+					"ERROR while updating user:"
+					);
+
 			e.printStackTrace();
 		}
 	}
+
+
+	// =========================
+	// DELETE USER
+	// =========================
 
 	@Override
 	public void deleteUser(int userId) {
-		
-		String DELETE_QUERY = "delete from user where user_id =?";
-		
-		Connection connection = DBConnection.getConnection();
-		
-		try {
-			
-			PreparedStatement pstmt = connection.prepareStatement(DELETE_QUERY);
-			pstmt.setInt(1, userId);
-			
-			int res = pstmt.executeUpdate();
-			System.out.println(res);
-			
-			pstmt.close();
-	        connection.close();
-			
+
+		String sql =
+				"DELETE FROM user WHERE user_id = ?";
+
+		try (
+				Connection connection =
+				DBConnection.getConnection();
+
+				PreparedStatement pstmt =
+						connection.prepareStatement(sql)
+				) {
+
+			pstmt.setInt(
+					1,
+					userId
+					);
+
+			int result =
+					pstmt.executeUpdate();
+
+			if (result > 0) {
+
+				System.out.println(
+						"User deleted successfully."
+						);
+
+			} else {
+
+				System.out.println(
+						"User not found."
+						);
+			}
+
 		} catch (Exception e) {
+
+			System.out.println(
+					"ERROR while deleting user:"
+					);
+
 			e.printStackTrace();
 		}
-
 	}
+
+
+	// =========================
+	// GET ALL USERS
+	// =========================
 
 	@Override
 	public List<User> getAllUsers() {
-		String GET_ALLUSERS = "select * from user";
-		ArrayList<User> list = new ArrayList<User>();
-		Connection connection = DBConnection.getConnection();
-		
-		try {
-			Statement stmt = connection.createStatement();
-			ResultSet res = stmt.executeQuery(GET_ALLUSERS);
-			
-			while(res.next()) {
-				res.getInt("user_id");
-				res.getString("full_name");
-				res.getString("email");
-				res.getString("password");
-				res.getString("phone");
-				res.getString("address");
-				res.getString("city");
-				res.getString("pincode");
-				res.getString("role");
-				res.getTimestamp("Created_at");
-				res.getTimestamp("Last_login");				
+
+		String sql =
+				"SELECT * FROM user";
+
+		List<User> users =
+				new ArrayList<>();
+
+		try (
+				Connection connection =
+				DBConnection.getConnection();
+
+				PreparedStatement pstmt =
+						connection.prepareStatement(sql);
+
+				ResultSet rs =
+						pstmt.executeQuery()
+				) {
+
+			while (rs.next()) {
+
+				User user =
+						mapUser(rs);
+
+				users.add(user);
 			}
-			stmt.close();
-	        connection.close();	
-		}
-		
-		catch (Exception e) {
+
+		} catch (Exception e) {
+
+			System.out.println(
+					"ERROR while getting all users:"
+					);
+
 			e.printStackTrace();
 		}
-		return list;
+
+		return users;
 	}
 
+
+	// =========================
+	// COMMON USER MAPPING
+	// =========================
+
+	private User mapUser(ResultSet rs)
+			throws Exception {
+
+		User user =
+				new User();
+
+		user.setUser_id(
+				rs.getInt("user_id")
+				);
+
+		user.setFull_name(
+				rs.getString("full_name")
+				);
+
+		user.setEmail(
+				rs.getString("email")
+				);
+
+		user.setPassword(
+				rs.getString("password")
+				);
+
+		user.setPhone(
+				rs.getString("phone")
+				);
+
+		user.setAddress(
+				rs.getString("address")
+				);
+
+		user.setCity(rs.getString("city"));
+
+		user.setPincode(rs.getString("pincode"));
+
+		user.setRole(
+				rs.getString("role")
+				);
+
+		user.setCreated_at(
+				rs.getTimestamp("created_at")
+				);
+
+		user.setLast_login(
+				rs.getTimestamp("last_login")
+				);
+
+		return user;
+	}
 }

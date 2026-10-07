@@ -13,37 +13,31 @@ import jakarta.servlet.http.HttpServletResponse;
 
 @WebServlet("/SignupServlet")
 public class SignupServlet extends HttpServlet {
-	
-	@Override
-	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		
-		String fullname = req.getParameter("full_name");
-		String email = req.getParameter("email");
-		String password = req.getParameter("password");
-		String phone = req.getParameter("phone");
-		String address = req.getParameter("address");
-		String city = req.getParameter("city");
-		String pincode = req.getParameter("pincode");
-		String role = req.getParameter("role");
-		
-		
-		User user = new User();
-		
-        user.setFull_name(fullname);
-        user.setEmail(email);
-        user.setPassword(password);
-        user.setPhone(phone);
-        user.setAddress(address);
-        user.setCity(city);
-        user.setPincode(pincode);
-        user.setRole(role);
-        
-		UserDAOImpl dao = new UserDAOImpl();
-		dao.addUser(user);
-		
-		resp.sendRedirect("signin.jsp");
-	}
-	
-	
 
+    private static final long serialVersionUID = 1L;
+
+    @Override
+    protected void doPost(HttpServletRequest req,
+                          HttpServletResponse resp)
+            throws ServletException, IOException {
+
+        User user = new User();
+
+        user.setFull_name(req.getParameter("full_name"));
+        user.setEmail(req.getParameter("email"));
+        user.setPassword(req.getParameter("password"));
+        user.setPhone(req.getParameter("phone"));
+        user.setAddress(req.getParameter("address"));
+        user.setCity(req.getParameter("city"));
+        user.setPincode(req.getParameter("pincode"));
+        user.setRole(req.getParameter("role"));
+
+        UserDAOImpl dao = new UserDAOImpl();
+        dao.addUser(user);
+
+        // SIGNUP -> LOGIN
+        resp.sendRedirect(
+            req.getContextPath() + "/signin.jsp"
+        );
+    }
 }

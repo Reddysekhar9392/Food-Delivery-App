@@ -8,69 +8,50 @@ public class DBConnection {
 
     public static Connection getConnection() {
 
-        Connection connection = null;
-
         try {
-
             Class.forName("com.mysql.cj.jdbc.Driver");
 
-            // Get database details from environment variables
-            String host = System.getenv("MYSQLHOST");
-            String port = System.getenv("MYSQLPORT");
-            String database = System.getenv("MYSQLDATABASE");
-            String username = System.getenv("MYSQLUSER");
-            String password = System.getenv("MYSQLPASSWORD");
-
-            String url;
+            // Render will provide these environment variables
+            String url = System.getenv("DB_URL");
+            String username = System.getenv("DB_USERNAME");
+            String password = System.getenv("DB_PASSWORD");
 
             // If environment variables are not available,
-            // use local MySQL database
-            if (host == null || host.isEmpty()) {
-
-                host = "localhost";
-                port = "3306";
-                database = "foodiee";
-                username = "root";
-
-                // Replace this with your LOCAL MySQL password
-                password = "YOUR_LOCAL_MYSQL_PASSWORD";
-
-                url = "jdbc:mysql://" + host + ":" + port + "/" + database
-                        + "?useSSL=false"
-                        + "&allowPublicKeyRetrieval=true"
-                        + "&serverTimezone=UTC";
-
-                System.out.println("Using LOCAL MySQL database");
-
-            } else {
-
-                // Aiven / Render cloud database
-                url = "jdbc:mysql://" + host + ":" + port + "/" + database
-                        + "?sslMode=REQUIRED"
-                        + "&serverTimezone=UTC";
-
-                System.out.println("Using CLOUD MySQL database");
+            // use local Eclipse/Tomcat MySQL settings
+            if (url == null || url.trim().isEmpty()) {
+                url = "jdbc:mysql://localhost:3306/food_delivery";
             }
 
-            connection = DriverManager.getConnection(
+            if (username == null || username.trim().isEmpty()) {
+                username = "root";
+            }
+
+            if (password == null || password.trim().isEmpty()) {
+                password = "root";
+            }
+
+            Connection connection = DriverManager.getConnection(
                     url,
                     username,
                     password
             );
 
-            System.out.println("Database connected successfully!");
+            System.out.println("Database connected successfully");
+            System.out.println(
+                    "Connected database: " + connection.getCatalog()
+            );
+
+            return connection;
 
         } catch (ClassNotFoundException e) {
-
-            System.out.println("MySQL JDBC Driver not found!");
+            System.out.println("MySQL JDBC Driver not found");
             e.printStackTrace();
 
         } catch (SQLException e) {
-
-            System.out.println("Database connection failed!");
+            System.out.println("Database connection failed");
             e.printStackTrace();
         }
 
-        return connection;
+        return null;
     }
 }
